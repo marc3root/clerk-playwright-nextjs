@@ -29,7 +29,7 @@ npm install
 ### Install test dependencies
 
 ```bash
-npx playwright install-deps
+npx playwright install --with-deps chromium
 ```
 
 ### Run tests

@@ -2,12 +2,10 @@ import { clerk, clerkSetup } from "@clerk/testing/playwright";
 import { test as setup } from "@playwright/test";
 import path from "path";
 
-// Ensures that Clerk setup is done before any tests run
-setup.describe.configure({
-  mode: "serial",
-});
+const authFile = path.join(__dirname, "../playwright/.clerk/user.json");
 
-setup("global setup", async () => {
+setup("global setup and authenticate", async ({ page }) => {
+  // First, setup the Clerk testing token
   await clerkSetup();
   if (
     !process.env.E2E_CLERK_USER_USERNAME ||
@@ -17,11 +15,8 @@ setup("global setup", async () => {
       "Please provide E2E_CLERK_USER_USERNAME and E2E_CLERK_USER_PASSWORD environment variables."
     );
   }
-});
-
-const authFile = path.join(__dirname, "../playwright/.clerk/user.json");
-
-setup("authenticate", async ({ page }) => {
+  
+  // Then authenticate and save the state
   await page.goto("/");
   await clerk.signIn({
     page,

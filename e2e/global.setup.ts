@@ -1,4 +1,4 @@
-import { clerk, clerkSetup } from "@clerk/testing/playwright";
+import { clerk, clerkSetup, setupClerkTestingToken } from "@clerk/testing/playwright";
 import { test as setup } from "@playwright/test";
 import path from "path";
 
@@ -22,18 +22,19 @@ setup("global setup", async () => {
 const authFile = path.join(__dirname, "../playwright/.clerk/user.json");
 
 setup("authenticate", async ({ page }) => {
-  await page.goto("/");
-  await clerk.signIn({
-    page,
-    signInParams: {
-      strategy: "password",
-      identifier:
-        process.env.E2E_CLERK_USER_USERNAME ||
-        process.env.E2E_CLERK_USER_EMAIL!,
-      password: process.env.E2E_CLERK_USER_PASSWORD!,
-    },
-  });
+  await setupClerkTestingToken({ page });
+  
   await page.goto("/protected");
+  await page.waitForSelector(".cl-signIn-root", { state: "attached" });
+  await page
+    .locator("input[name=identifier]")
+    .fill(process.env.E2E_CLERK_USER_USERNAME!);
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page
+    .locator("input[name=password]")
+    .fill(process.env.E2E_CLERK_USER_PASSWORD!);
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.waitForURL("**/protected");
   await page.waitForSelector("h1:has-text('This is a PROTECTED page')");
 
   await page.context().storageState({ path: authFile });
